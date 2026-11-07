@@ -1,63 +1,132 @@
 
-def add(x, y):
-    return x + y
+import tkinter as tk
+import math
 
+# Main window
+root = tk.Tk()
+root.title("Scientific Calculator")
+root.geometry("420x570")
+root.resizable(False, False)
+root.configure(bg="#202A44")
 
-def subtract(x, y):
-    return x - y
+expression = ""
 
+# Display
+display = tk.Entry(
+    root, font=("Arial", 22),
+    bg="white", fg="black",
+    justify="right", bd=10
+)
+display.pack(fill="x", padx=10, pady=15)
 
-def multiply(x, y):
-    return x * y
+def press(value):
+    display.insert(tk.END, value)
 
+def clear():
+    display.delete(0, tk.END)
 
-def divide(x, y):
-    if y == 0:
-        return "Error! Division by zero."
-    return x / y
+def delete():
+    current = display.get()
+    display.delete(0, tk.END)
+    display.insert(0, current[:-1])
 
-
-# Main calculator loop
-while True:
-    print("\nSelect operation:")
-    print("1. Add")
-    print("2. Subtract")
-    print("3. Multiply")
-    print("4. Divide")
-
-    choice = input("Enter choice (1/2/3/4): ")
-
-    if choice not in ('1', '2', '3', '4'):
-        print("Invalid choice. Please select 1, 2, 3, or 4.")
-        continue
-
+def calculate():
     try:
-        num1 = float(input("Enter first number: "))
-        num2 = float(input("Enter second number: "))
-    except ValueError:
-        print("Invalid input. Please enter valid numbers.")
-        continue
+        exp = display.get()
+        
+        # Scientific functions
+        exp = exp.replace("√", "math.sqrt")
+        exp = exp.replace("log(", "math.log10(")
+        exp = exp.replace("ln(", "math.log(")
+        exp = exp.replace("sin(", "math.sin(math.radians(")
+        exp = exp.replace("cos(", "math.cos(math.radians(")
+        exp = exp.replace("tan(", "math.tan(math.radians(")
+        
+        # Close parentheses for trigonometry
+        exp = exp.replace("math.radians(", "math.radians(")
+        
+        result = eval(exp, {"__builtins__": {}}, {
+            "math": math,
+            "abs": abs,
+            "pow": pow
+        })
+        
+        clear()
+        display.insert(0, str(result))
 
-    if choice == '1':
-        result = add(num1, num2)
-        print(f"{num1} + {num2} = {result}")
+    except Exception:
+        clear()
+        display.insert(0, "Error")
 
-    elif choice == '2':
-        result = subtract(num1, num2)
-        print(f"{num1} - {num2} = {result}")
+# Buttons
+buttons = [
+    ["7", "8", "9", "/", "C"],
+    ["4", "5", "6", "*", "DEL"],
+    ["1", "2", "3", "-", "+"],
+    ["0", ".", "(", ")", "="],
+    ["√(", "log(", "ln(", "^", "%"],
+    ["sin(", "cos(", "tan(", "π", "e"]
+]
 
-    elif choice == '3':
-        result = multiply(num1, num2)
-        print(f"{num1} * {num2} = {result}")
+def button_click(value):
+    if value == "C":
+        clear()
+    elif value == "DEL":
+        delete()
+    elif value == "=":
+        calculate()
+    elif value == "^":
+        press("**")
+    elif value == "π":
+        press("math.pi")
+    elif value == "e":
+        press("math.e")
+    elif value == "%":
+        press("/100")
+    else:
+        press(value)
 
-    elif choice == '4':
-        result = divide(num1, num2)
-        print(f"{num1} / {num2} = {result}")
+frame = tk.Frame(root, bg="#202A44")
+frame.pack(expand=True, fill="both", padx=8, pady=5)
 
-    next_calculation = input(
-        "Do you want another calculation? (yes/no): "
-    ).strip().lower()
+for row in buttons:
+    for item in row:
+        btn = tk.Button(
+            frame,
+            text=item,
+            font=("Arial", 14, "bold"),
+            bg="#344563",
+            fg="white",
+            activebackground="#FF9800",
+            command=lambda x=item: button_click(x)
+        )
+        btn.pack(side="left", expand=True, fill="both",
+                 padx=3, pady=3)
+    # New row
+    frame.update_idletasks()
+    # Use grid layout instead
+    break
 
-    if next_calculation != 'yes':
-        print("Calculator closed. Goodbye!")
-        break
+# Rebuild buttons using grid
+for widget in frame.winfo_children():
+    widget.destroy()
+
+for r, row in enumerate(buttons):
+    for c, item in enumerate(row):
+        btn = tk.Button(
+            frame, text=item,
+            font=("Arial", 13, "bold"),
+            bg="#344563", fg="white",
+            activebackground="#FF9800",
+            command=lambda x=item: button_click(x)
+        )
+        btn.grid(row=r, column=c, sticky="nsew",
+                 padx=3, pady=3)
+
+for i in range(6):
+    frame.grid_rowconfigure(i, weight=1)
+
+for i in range(5):
+    frame.grid_columnconfigure(i, weight=1)
+
+root.mainloop()
